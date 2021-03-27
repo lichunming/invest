@@ -23,8 +23,10 @@ type conf struct {
 	NetProfit                    int64 `yaml:"netProfit"`
 	IrregularProfit              int64 `yaml:"irregularProfit"`
 	TotalAssets                  int64 `yaml:"assets"`
+	CurrentAssets                int64 `yaml:"currentAssets"`
 	TotalAssetsPreviously        int64 `yaml:"assetsFromLastTime"`
 	TotalLiabilities             int64 `yaml:"liabilities"`
+	CurrentLiabilities           int64 `yaml:"currentLiabilities"`
 	AccountReceivable            int64 `yaml:"receivable"`
 	FixedAssets                  int64 `yaml:"fixedAssets"`
 	OperatingNetCash             int64 `yaml:"opNetCash"`
@@ -44,21 +46,25 @@ func (c *conf) getConf(filename string) {
 }
 
 type report struct {
-	OperatingRevenue                float64
-	CostOfRevenue                   float64
-	SalesExpense                    float64
-	AdminExpense                    float64
-	DevExpense                      float64
-	FinancingExpense                float64
-	ThreeExpenses                   float64
-	NetProfit                       float64
-	LiabilitiesToAssets             float64
-	Receivable                      float64
-	FixedAssets                     float64
+	OperatingRevenue float64
+	CostOfRevenue    float64
+	SalesExpense     float64
+	AdminExpense     float64
+	DevExpense       float64
+	FinancingExpense float64
+	ThreeExpenses    float64
+	NetProfit        float64
+
+	LiabilitiesToAssets float64
+	Receivable          float64
+	NetWorkingCapital   float64
+	FixedAssets         float64
+
 	WeightedRoE                     float64
 	WeightedAverageCostOfCapital    float64
-	ReturnOnInvestedCapital         float64
+	ROIC                            float64
 	AssetsTurnoverRatio             float64
+	AssetsGrowth                    float64
 	OperatingNetCashToNetProfit     float64
 	OperatingNetCashToRegularProfit float64
 }
@@ -68,26 +74,30 @@ func (c *conf) toReport() *report {
 	//EBIT growth
 	//Leverage
 
-	RegularProfit := c.NetProfit - c.IrregularProfit
+	regularProfit := c.NetProfit - c.IrregularProfit
+	netWorkingCapital := float64(c.CurrentAssets - c.CurrentLiabilities)
 	roe := toPercent(
-		RegularProfit*2,
+		regularProfit*2,
 		c.TotalAssets-c.TotalLiabilities+c.TotalEquityPreviously)
 	r := report{
-		OperatingRevenue:                toPercent(c.OperatingRevenue, c.Revenue),
-		CostOfRevenue:                   toPercent(c.CostOfRevenue, c.Revenue),
-		SalesExpense:                    toPercent(c.CostOfSales, c.Revenue),
-		AdminExpense:                    toPercent(c.CostOfAdministrative, c.Revenue),
-		DevExpense:                      toPercent(c.CostOfResearchAndDevelopment, c.Revenue),
-		FinancingExpense:                toPercent(c.CostOfFinancing, c.Revenue),
-		ThreeExpenses:                   toPercent((c.CostOfSales + c.CostOfAdministrative + c.CostOfResearchAndDevelopment + c.CostOfFinancing), c.Revenue),
-		NetProfit:                       toPercent(c.NetProfit, c.Revenue),
-		LiabilitiesToAssets:             toPercent(c.TotalLiabilities, c.TotalAssets),
-		Receivable:                      toPercent(c.AccountReceivable, c.TotalAssets),
-		FixedAssets:                     toPercent(c.FixedAssets, c.TotalAssets),
-		WeightedRoE:                     roe,
-		AssetsTurnoverRatio:             toPercent(c.Revenue*2, (c.TotalAssets + c.TotalAssetsPreviously)),
+		OperatingRevenue:    toPercent(c.OperatingRevenue, c.Revenue),
+		CostOfRevenue:       toPercent(c.CostOfRevenue, c.Revenue),
+		SalesExpense:        toPercent(c.CostOfSales, c.Revenue),
+		AdminExpense:        toPercent(c.CostOfAdministrative, c.Revenue),
+		DevExpense:          toPercent(c.CostOfResearchAndDevelopment, c.Revenue),
+		FinancingExpense:    toPercent(c.CostOfFinancing, c.Revenue),
+		ThreeExpenses:       toPercent((c.CostOfSales + c.CostOfAdministrative + c.CostOfResearchAndDevelopment + c.CostOfFinancing), c.Revenue),
+		NetProfit:           toPercent(c.NetProfit, c.Revenue),
+		LiabilitiesToAssets: toPercent(c.TotalLiabilities, c.TotalAssets),
+		Receivable:          toPercent(c.AccountReceivable, c.TotalAssets),
+		NetWorkingCapital:   netWorkingCapital,
+		FixedAssets:         toPercent(c.FixedAssets, c.TotalAssets),
+		WeightedRoE:         roe,
+		AssetsTurnoverRatio: toPercent(c.Revenue*2, (c.TotalAssets + c.TotalAssetsPreviously)),
+
+		AssetsGrowth:                    toPercent(c.TotalAssets-c.TotalAssetsPreviously, c.TotalAssetsPreviously),
 		OperatingNetCashToNetProfit:     toPercent(c.OperatingNetCash, c.NetProfit),
-		OperatingNetCashToRegularProfit: toPercent(c.OperatingNetCash, RegularProfit),
+		OperatingNetCashToRegularProfit: toPercent(c.OperatingNetCash, regularProfit),
 	}
 	return &r
 }

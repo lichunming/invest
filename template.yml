@@ -10,8 +10,10 @@ opProfit:
 netProfit:
 irregularProfit:
 assets:
+currentAssets:
 assetsFromLastTime:
 liabilities:
+currentLiabilities:
 receivable:
 fixedAssets:
 equityFromLastTime:
